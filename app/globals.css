@@ -1,0 +1,163 @@
+@import "tailwindcss";
+
+@theme {
+  --font-nunito: "Nunito", system-ui, sans-serif;
+  
+  /* Add custom animations here in v4 */
+  --animate-shine: shine 1.5s ease-in-out infinite;
+  
+  @keyframes shine {
+    0% { left: -100%; }
+    100% { left: 200%; }
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   JOYO GLOBAL STYLES
+   "Learning feels like play."
+═══════════════════════════════════════════════════ */
+
+@layer base {
+  :root {
+    /* Brand palette as CSS vars for use in non-Tailwind contexts */
+    --joyo-yellow:    #F5C518;
+    --joyo-green:     #4CAF50;
+    --joyo-green-d:   #388E3C;
+    --joyo-green-l:   #A5D6A7;
+    --joyo-cream:     #FFF8E7;
+    --joyo-coral:     #FF7043;
+    --joyo-coral-d:   #E64A19;
+    --joyo-blue:      #5C9BF5;
+    --joyo-purple:    #A86FBE;
+    --joyo-brown:     #3D2C1E;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    overscroll-behavior: none;
+  }
+
+  body {
+    @apply bg-(--joyo-cream) text-(--joyo-brown) font-(--font-nunito);
+    -webkit-text-size-adjust: 100%;
+    overflow-x: hidden;
+  }
+
+  [dir="rtl"] {
+    font-family: system-ui, -apple-system, sans-serif;
+    letter-spacing: 0;
+  }[dir="rtl"] .ml-auto  { margin-right: auto; margin-left: 0; }
+  [dir="rtl"] .mr-2     { margin-left: 0.5rem; margin-right: 0; }
+  [dir="rtl"] .mr-4     { margin-left: 1rem; margin-right: 0; }
+  [dir="rtl"] .pl-4     { padding-right: 1rem; padding-left: 0; }
+}
+
+/* ── UTILITY LAYER ──────────────────────────────────── */
+@layer utilities {
+
+  .botanical-bg {
+    background-image:
+      radial-gradient(ellipse at 10% 20%, rgba(255,255,255,0.12) 0%, transparent 55%),
+      radial-gradient(ellipse at 90% 80%, rgba(255,255,255,0.10) 0%, transparent 55%);
+  }
+
+  .btn-press {
+    transition: transform 0.1s, box-shadow 0.1s;
+    transform-origin: center bottom;
+  }
+  .btn-press:active {
+    transform: translateY(4px);
+    box-shadow: none !important;
+  }
+
+  .answer-token {
+    @apply 
+      aspect-square rounded-full bg-white
+      flex items-center justify-center
+      shadow-md
+      border-4 border-transparent
+      cursor-pointer select-none
+      transition-all duration-150;
+  }
+  .answer-token:hover:not(:disabled) {
+    @apply shadow-lg;
+    transform: scale(1.06) translateY(-3px);
+  }
+  .answer-token:active:not(:disabled) {
+    transform: scale(0.94) translateY(2px);
+    @apply shadow-none;
+  }
+  .answer-token.wrong {
+    @apply border-red-400 bg-red-50;
+    animation: token-shake 0.45s cubic-bezier(.36,.07,.19,.97);
+  }
+  .answer-token.correct-flash {
+    @apply border-yellow-400 bg-yellow-50;
+  }
+  .answer-token:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  .focal-zone {
+    @apply
+      rounded-[40px]
+      border-4 border-dashed border-white/40
+      bg-white/10
+      flex items-center justify-center
+      transition-all duration-300;
+  }
+  .focal-zone.success {
+    @apply border-yellow-400 bg-white/25;
+    animation: zone-pulse 0.55s cubic-bezier(.34,1.56,.64,1);
+  }
+}
+
+/* ── KEYFRAMES ──────────────────────────────────────── */
+@keyframes token-shake {
+  0%,100% { transform: translateX(0); }
+  20%     { transform: translateX(-10px); }
+  40%     { transform: translateX(10px); }
+  60%     { transform: translateX(-6px); }
+  80%     { transform: translateX(6px); }
+}
+
+@keyframes zone-pulse {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.07); }
+  70%  { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+
+@keyframes confetti-fall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  80%  { opacity: 1; }
+  100% {
+    transform: translateY(var(--fy, -300px)) translateX(var(--fx, 0px)) rotate(var(--fr, 360deg));
+    opacity: 0;
+  }
+}
+
+@keyframes speech-pop {
+  0%   { transform: translateX(-50%) scale(0.7); opacity: 0; }
+  70%  { transform: translateX(-50%) scale(1.06); opacity: 1; }
+  100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+.speech-bubble {
+  animation: speech-pop 0.35s cubic-bezier(.34,1.4,.64,1) forwards;
+}
+
+.confetti-piece {
+  position: fixed;
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 9000;
+  animation: confetti-fall var(--dur, 1.5s) ease-out forwards;
+  animation-delay: var(--delay, 0s);
+}
