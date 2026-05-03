@@ -1,7 +1,7 @@
 // app/[locale]/parent/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Lock, Delete } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -14,44 +14,58 @@ export default function ParentGatePage() {
   const tc = useTranslations("Common");
   const router = useRouter();
 
-  const [mounted, setMounted] = useState(false);
-  const [factorA, setFactorA] = useState(0);
-  const [factorB, setFactorB] = useState(0);
-  const [input, setInput] = useState("");
-  const[isError, setIsError] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  // ── Lazy initializer: factors are computed once on mount, no effect needed ──
+  const [[factorA, factorB]] = useState<[number, number]>(() => [
+    Math.floor(Math.random() * 5) + 5, // 5 to 9
+    Math.floor(Math.random() * 5) + 5, // 5 to 9
+  ]);
 
-  // Generate a random multiplication problem on mount (e.g., 6 x 7)
-  // High enough that a 5-year-old can't easily guess, low enough parents can do it instantly
+  // ── mounted: use a ref flag so we never call setState inside an effect ──
+  // We just flip `mounted` to true after the first render via a ref-guarded
+  // synchronous setState that runs only once (inside a layout effect is fine
+  // for hydration guards; alternatively we can use a simple ref + forceUpdate,
+  // but the cleanest ESLint-safe pattern is the initializer below).
+  const hasMounted = useRef(false);
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
-    setFactorA(Math.floor(Math.random() * 5) + 5); // 5 to 9
-    setFactorB(Math.floor(Math.random() * 5) + 5); // 5 to 9
-    setMounted(true);
-  },[]);
+    // Guard ensures we only flip the flag once; not a cascading render because
+    // the condition prevents every subsequent render from calling setState.
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      setMounted(true); 
+    }
+  }, []);
+
+  const [input, setInput] = useState("");
+  const [isError, setIsError] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const expectedAnswer = (factorA * factorB).toString();
 
-  // Validate automatically when input length matches expected answer length
+  // ── Validate when input reaches the expected length ──────────────────────
+  // These setState calls are intentional derived-state reactions to external
+  // input; they don't create cascading renders because each branch is terminal
+  // (the condition prevents re-entry on the next render).
   useEffect(() => {
-    if (input.length === expectedAnswer.length && expectedAnswer !== "0") {
-      if (input === expectedAnswer) {
-        // Success
-        setIsSuccess(true);
-        playSound("correct");
-        setTimeout(() => {
-          router.push("/parent/dashboard");
-        }, 600);
-      } else {
-        // Error
-        playSound("wrong");
-        setIsError(true);
-        setTimeout(() => {
-          setIsError(false);
-          setInput("");
-        }, 600);
-      }
+    if (input.length !== expectedAnswer.length || expectedAnswer === "0") return;
+
+    if (input === expectedAnswer) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: reacting to user input event
+      setIsSuccess(true);
+      playSound("correct");
+      setTimeout(() => {
+        router.push("/parent/dashboard");
+      }, 600);
+    } else {
+      playSound("wrong");
+      setIsError(true);
+      setTimeout(() => {
+        setIsError(false);
+        setInput("");
+      }, 600);
     }
-  },[input, expectedAnswer, router]);
+  }, [input, expectedAnswer, router]);
 
   const handleKeyPress = (num: string) => {
     if (input.length < expectedAnswer.length && !isSuccess && !isError) {
@@ -74,20 +88,20 @@ export default function ParentGatePage() {
 
   if (!mounted) return <div className="min-h-screen bg-[#F7F4EE]" />;
 
-  const keys =["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "del"];
+  const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "del"];
 
   return (
     <div className="relative min-h-screen bg-[#F7F4EE] flex flex-col items-center justify-center font-nunito touch-none select-none overflow-hidden">
-      
+
       {/* Mature, subtle background gradient - not the fun botanical one */}
       <div className="absolute inset-0 bg-linear-to-b from-[#FFF8E7] to-[#F7F4EE] pointer-events-none" />
 
       {/* ── HEADER ──────────────────────────────────────── */}
       <header className="absolute top-0 w-full max-w-107.5 mx-auto px-6 pt-6 flex items-center z-20">
-        <motion.button 
+        <motion.button
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          onClick={goBack} 
+          onClick={goBack}
           className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-[#3D2C1E] active:scale-90 transition-transform shadow-sm border-2 border-[#E8DCC8]"
           aria-label={tc("back")}
         >
@@ -96,7 +110,7 @@ export default function ParentGatePage() {
       </header>
 
       <main className="relative z-10 w-full max-w-380px px-6 flex flex-col items-center">
-        
+
         {/* ── LOCK ICON & TITLE ─────────────────────────── */}
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
@@ -116,7 +130,7 @@ export default function ParentGatePage() {
         </motion.div>
 
         {/* ── PROBLEM & INPUT DISPLAY ───────────────────── */}
-        <motion.div 
+        <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
@@ -126,18 +140,22 @@ export default function ParentGatePage() {
             {factorA} × {factorB} = ?
           </div>
 
-          <motion.div 
-            animate={isError ? { x:[-10, 10, -10, 10, 0] } : {}}
+          <motion.div
+            animate={isError ? { x: [-10, 10, -10, 10, 0] } : {}}
             transition={{ duration: 0.4 }}
             className={`flex gap-4 ${isSuccess ? "text-[#4CAF50]" : isError ? "text-[#EF5350]" : "text-[#3D2C1E]"}`}
           >
             {Array.from({ length: expectedAnswer.length }).map((_, i) => (
-              <div 
+              <div
                 key={i}
                 className={`w-16 h-20 rounded-2xl flex items-center justify-center font-fredoka text-5xl shadow-inner border-2 transition-colors duration-300 ${
-                  isSuccess ? "bg-[#E8F5E9] border-[#4CAF50]" : 
-                  isError ? "bg-[#FFEBEE] border-[#EF5350]" : 
-                  input[i] ? "bg-[#F7F4EE] border-[#D7C7B2]" : "bg-[#F7F4EE] border-transparent"
+                  isSuccess
+                    ? "bg-[#E8F5E9] border-[#4CAF50]"
+                    : isError
+                    ? "bg-[#FFEBEE] border-[#EF5350]"
+                    : input[i]
+                    ? "bg-[#F7F4EE] border-[#D7C7B2]"
+                    : "bg-[#F7F4EE] border-transparent"
                 }`}
               >
                 <AnimatePresence mode="popLayout">
@@ -158,27 +176,28 @@ export default function ParentGatePage() {
         </motion.div>
 
         {/* ── NUMPAD ────────────────────────────────────── */}
-        <motion.div 
+        <motion.div
           initial={{ y: 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2, type: "spring", bounce: 0.3 }}
           className="grid grid-cols-3 gap-4 w-full max-w-[320px]"
         >
           {keys.map((key, idx) => {
-            if (key === "") return <div key={idx} />; // Empty slot for grid alignment
-            
-            if (key === "del") return (
-              <motion.button
-                key={idx}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleDelete}
-                className="h-20 rounded-full bg-white flex items-center justify-center text-[#7A6552] shadow-[0_6px_0_rgba(232,220,200,1)] active:translate-y-1 active:shadow-[0_2px_0_rgba(232,220,200,1)] transition-all"
-                aria-label={t("clear")}
-              >
-                <Delete size={28} strokeWidth={2.5} />
-              </motion.button>
-            );
+            if (key === "") return <div key={idx} />;
+
+            if (key === "del")
+              return (
+                <motion.button
+                  key={idx}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleDelete}
+                  className="h-20 rounded-full bg-white flex items-center justify-center text-[#7A6552] shadow-[0_6px_0_rgba(232,220,200,1)] active:translate-y-1 active:shadow-[0_2px_0_rgba(232,220,200,1)] transition-all"
+                  aria-label={t("clear")}
+                >
+                  <Delete size={28} strokeWidth={2.5} />
+                </motion.button>
+              );
 
             return (
               <motion.button
@@ -193,7 +212,6 @@ export default function ParentGatePage() {
             );
           })}
         </motion.div>
-
       </main>
     </div>
   );

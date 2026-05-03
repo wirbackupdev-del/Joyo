@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import { ArrowLeft, Star } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
@@ -22,13 +22,13 @@ const containerVariants = {
   },
 };
 
-const cardVariants = {
+const cardVariants: Variants = {
   hidden: { opacity: 0, y: 50, scale: 0.9 },
   show: { 
     opacity: 1, 
     y: 0, 
     scale: 1,
-    transition: { type: "spring", bounce: 0.5, duration: 0.6 }
+    transition: { type: "spring" as const, bounce: 0.5, duration: 0.6 }
   },
 };
 
