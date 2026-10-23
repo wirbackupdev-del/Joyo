@@ -10,6 +10,7 @@ import { useJoyoStore } from "@/store/useJoyoStore";
 import { Confetti } from "@/components/game/Confetti";
 import { AnimalCharacter } from "@/components/game/AnimalCharacter";
 import { playSound } from "@/lib/sounds";
+import { useFocusTrap } from "@/lib/hooks/useFocusTrap";
 
 interface CelebrationModalProps {
   isOpen: boolean;
@@ -17,6 +18,8 @@ interface CelebrationModalProps {
   title?: string;
   subtitle?: string;
   buttonText?: string;
+  /** Full-module graduation moment: special cap + celebratory styling */
+  diploma?: boolean;
 }
 
 export function CelebrationModal({ 
@@ -24,12 +27,14 @@ export function CelebrationModal({
   onNext,
   title,
   subtitle,
-  buttonText
+  buttonText,
+  diploma = false,
 }: CelebrationModalProps) {
   const t = useTranslations("Celebration");
-//   const tc = useTranslations("Common");
+  const tc = useTranslations("Common");
+  const trapRef = useFocusTrap<HTMLDivElement>(isOpen);
   
-  const { avatar } = useJoyoStore();
+  const { avatar, childName } = useJoyoStore();
 
   useEffect(() => {
     if (isOpen) {
@@ -46,7 +51,13 @@ export function CelebrationModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center overflow-hidden touch-none select-none px-6">
+        <div
+          ref={trapRef}
+          className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden touch-none select-none px-6"
+          role="dialog"
+          aria-modal="true"
+          aria-label={title || "celebration"}
+        >
           
           {/* ── BACKDROP ───────────────────────────────────────── */}
           <motion.div 
@@ -67,7 +78,7 @@ export function CelebrationModal({
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.8, y: 50, opacity: 0 }}
             transition={{ type: "spring", bounce: 0.5, duration: 0.6 }}
-            className="relative w-full max-w-400px bg-white rounded-[48px] p-8 shadow-[0_24px_60px_rgba(0,0,0,0.3)] border-8 border-white flex flex-col items-center text-center z-20"
+            className="relative w-full max-w-[400px] bg-white rounded-[48px] p-8 shadow-[0_24px_60px_rgba(0,0,0,0.3)] border-8 border-white flex flex-col items-center text-center z-20"
           >
             {/* Rotating Sunburst / Lightbeams Behind Avatar */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 pointer-events-none -z-10">
@@ -88,7 +99,37 @@ export function CelebrationModal({
               
               <div className="relative w-32 h-32 bg-[#FFF8E7] rounded-full border-4 border-white shadow-xl flex items-center justify-center z-10">
                 <AnimalCharacter animal={avatar} color="#F5C518" className="w-24 h-24 mt-4" />
+                {/* Graduation cap for the module-completed "diploma" moment */}
+                {diploma && (
+                  <motion.div
+                    initial={{ y: -30, rotate: -20, opacity: 0 }}
+                    animate={{ y: 0, rotate: -8, opacity: 1 }}
+                    transition={{ delay: 0.4, type: "spring", bounce: 0.6 }}
+                    className="absolute -top-3 left-1/2 -translate-x-1/2 z-20"
+                    aria-hidden="true"
+                  >
+                    <svg viewBox="0 0 64 40" className="w-14 h-10 drop-shadow-md">
+                      <path d="M32 2 62 14 32 26 2 14Z" fill="#263238" />
+                      <path d="M32 6 54 14 32 22 10 14Z" fill="#37474F" />
+                      <rect x="26" y="22" width="12" height="10" rx="2" fill="#37474F" />
+                      <circle cx="52" cy="18" r="3" fill="#F5C518" stroke="#D4A800" strokeWidth="1.5" />
+                      <path d="M52 6v9" stroke="#F5C518" strokeWidth="1.5" />
+                    </svg>
+                  </motion.div>
+                )}
               </div>
+
+              {/* Child's own name on the diploma */}
+              {diploma && childName && (
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.9 }}
+                  className="relative z-20 mt-2 font-fredoka text-lg text-[#3D2C1E] bg-white px-4 py-1.5 rounded-full border-2 border-[#F5C518] shadow-sm"
+                >
+                  {childName}
+                </motion.span>
+              )}
 
               {/* 3 Popping Stars */}
               <div className="absolute -top-4 -left-6 z-20">
@@ -127,7 +168,7 @@ export function CelebrationModal({
               transition={{ delay: 0.6 }}
               className="font-fredoka text-4xl text-[#FF7043] mb-3 leading-tight drop-shadow-sm"
             >
-              {title || t("moduleComplete")}
+              {title || (diploma ? t("diplomaTitle") : t("moduleComplete"))}
             </motion.h2>
             
             <motion.p 
@@ -147,12 +188,15 @@ export function CelebrationModal({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleNext}
-              className="w-full bg-[#4CAF50] text-white font-fredoka text-2xl py-5 rounded-32px shadow-[0_8px_0_rgba(56,142,60,1)] active:translate-y-2 active:shadow-[0_0px_0_rgba(56,142,60,1)] transition-all flex items-center justify-center gap-2 relative overflow-hidden group"
+              className="w-full bg-[#4CAF50] text-white font-fredoka text-2xl py-5 rounded-[32px] shadow-[0_8px_0_rgba(56,142,60,1)] active:translate-y-2 active:shadow-[0_0px_0_rgba(56,142,60,1)] transition-all flex items-center justify-center gap-2 relative overflow-hidden group"
             >
               {/* Shine effect on button */}
-              <div className="absolute top-0 -left-100% w-1/2 h-full bg-white/20 skew-x-[-20deg] group-hover:animate-[shine_1.5s_ease-in-out_infinite]" />
+              <div className="absolute top-0 -left-[100%] w-1/2 h-full bg-white/20 skew-x-[-20deg] group-hover:animate-shine" />
               
-              {buttonText || t("claimReward")}
+              {buttonText ||
+                (diploma
+                  ? tc("finish")
+                  : t("claimReward"))}
             </motion.button>
 
           </motion.div>

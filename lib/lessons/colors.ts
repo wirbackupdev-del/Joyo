@@ -1,5 +1,7 @@
 // lib/lessons/colors.ts
 
+import type { Avatar } from "@/store/useJoyoStore";
+
 export interface ColorLesson {
   id: string;
   /** i18n key for the color name: e.g. "red" */
@@ -9,10 +11,10 @@ export interface ColorLesson {
   /** The hex code of the color */
   hex: string;
   /** Animal character tied to this color lesson */
-  animal: "koala" | "fox" | "bear" | "dog" | "rabbit";
+  animal: Avatar;
 }
 
-export const COLORS_DATA: ColorLesson[] =[
+export const COLORS_DATA: ColorLesson[] = [
   {
     id: "color-red",
     nameKey: "red",

@@ -17,11 +17,13 @@ export function Confetti({ active }: ConfettiProps) {
 
   useEffect(() => {
     if (!active || !containerRef.current) return;
+    // Motion-sensitive users get no confetti (media query guard)
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const container = containerRef.current;
 
     const pieces: HTMLDivElement[] = [];
 
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < 36; i++) {
       const el = document.createElement("div");
       const color = COLORS[Math.floor(Math.random() * COLORS.length)];
       const isCircle = Math.random() > 0.5;
@@ -32,6 +34,7 @@ export function Confetti({ active }: ConfettiProps) {
         height: 11px;
         background: ${color};
         border-radius: ${isCircle ? "50%" : "3px"};
+        will-change: transform;
         left: ${20 + Math.random() * 60}%;
         top: 30%;
         --fy: ${-(Math.random() * 380 + 80)}px;
@@ -61,7 +64,7 @@ export function Confetti({ active }: ConfettiProps) {
     <div
       ref={containerRef}
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-9000 overflow-hidden"
+      className="pointer-events-none fixed inset-0 z-[9000] overflow-hidden"
     />
   );
 }

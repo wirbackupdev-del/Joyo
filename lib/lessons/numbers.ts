@@ -1,5 +1,7 @@
 // lib/lessons/numbers.ts
 
+import type { Avatar } from "@/store/useJoyoStore";
+
 export interface NumberLesson {
   id: string;
   char: string;
@@ -9,10 +11,10 @@ export interface NumberLesson {
   /** Token fill color */
   color: string;
   /** Animal character tied to this number */
-  animal: "koala" | "fox" | "bear" | "dog" | "rabbit";
+  animal: Avatar;
 }
 
-export const NUMBERS_DATA: NumberLesson[] =[
+export const NUMBERS_DATA: NumberLesson[] = [
   {
     id: "num-1",
     char: "1",
@@ -35,7 +37,7 @@ export const NUMBERS_DATA: NumberLesson[] =[
     value: 3,
     hintKey: "hint3",
     color: "#4CAF50", // Green
-    animal: "bear", // Using bear for 3
+    animal: "bear",
   },
   {
     id: "num-4",

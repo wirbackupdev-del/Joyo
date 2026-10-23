@@ -1,41 +1,57 @@
 // app/[locale]/parent/page.tsx
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Lock, Delete } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
 
-import { playSound } from "@/lib/sounds";
+import { playSound, stopMusic } from "@/lib/sounds";
+import { useHydrated } from "@/lib/hooks/useHydrated";
+
+/** Survives page turns within this browser session; cleared on close. */
+const UNLOCK_KEY = "joyo.parentUnlocked";
+
+export function markParentUnlocked(): void {
+  try {
+    sessionStorage.setItem(UNLOCK_KEY, "1");
+  } catch {
+    /* private mode — gate simply repeats */
+  }
+}
 
 export default function ParentGatePage() {
   const t = useTranslations("ParentGate");
   const tc = useTranslations("Common");
   const router = useRouter();
 
-  // ── Lazy initializer: factors are computed once on mount, no effect needed ──
+  // Parent zone → no ambient music
+  useEffect(() => stopMusic(), []);
+
+  const hydrated = useHydrated();
+
+  // Already verified this session → straight through to the dashboard
+  useEffect(() => {
+    if (!hydrated) return;
+    let verified = false;
+    try {
+      verified = sessionStorage.getItem(UNLOCK_KEY) === "1";
+    } catch {
+      /* ignore */
+    }
+    if (verified) {
+      playSound("pop");
+      router.replace("/parent/dashboard");
+    }
+  }, [hydrated, router]);
+
+  // Random factors are re-drawn per mount; the hydration guard keeps the
+  // server-prerendered markup (blank tile) in sync with the client.
   const [[factorA, factorB]] = useState<[number, number]>(() => [
     Math.floor(Math.random() * 5) + 5, // 5 to 9
     Math.floor(Math.random() * 5) + 5, // 5 to 9
   ]);
-
-  // ── mounted: use a ref flag so we never call setState inside an effect ──
-  // We just flip `mounted` to true after the first render via a ref-guarded
-  // synchronous setState that runs only once (inside a layout effect is fine
-  // for hydration guards; alternatively we can use a simple ref + forceUpdate,
-  // but the cleanest ESLint-safe pattern is the initializer below).
-  const hasMounted = useRef(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    // Guard ensures we only flip the flag once; not a cascading render because
-    // the condition prevents every subsequent render from calling setState.
-    if (!hasMounted.current) {
-      hasMounted.current = true;
-      setMounted(true); 
-    }
-  }, []);
 
   const [input, setInput] = useState("");
   const [isError, setIsError] = useState(false);
@@ -53,6 +69,7 @@ export default function ParentGatePage() {
     if (input === expectedAnswer) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: reacting to user input event
       setIsSuccess(true);
+      markParentUnlocked();
       playSound("correct");
       setTimeout(() => {
         router.push("/parent/dashboard");
@@ -86,7 +103,7 @@ export default function ParentGatePage() {
     router.back();
   };
 
-  if (!mounted) return <div className="min-h-screen bg-[#F7F4EE]" />;
+  if (!hydrated) return <div className="min-h-screen bg-[#F7F4EE]" />;
 
   const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "del"];
 
@@ -97,7 +114,7 @@ export default function ParentGatePage() {
       <div className="absolute inset-0 bg-linear-to-b from-[#FFF8E7] to-[#F7F4EE] pointer-events-none" />
 
       {/* ── HEADER ──────────────────────────────────────── */}
-      <header className="absolute top-0 w-full max-w-107.5 mx-auto px-6 pt-6 flex items-center z-20">
+      <header className="absolute top-0 w-full max-w-[430px] mx-auto px-6 pt-6 flex items-center z-20">
         <motion.button
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -109,7 +126,7 @@ export default function ParentGatePage() {
         </motion.button>
       </header>
 
-      <main className="relative z-10 w-full max-w-380px px-6 flex flex-col items-center">
+      <main className="relative z-10 w-full max-w-[380px] px-6 flex flex-col items-center">
 
         {/* ── LOCK ICON & TITLE ─────────────────────────── */}
         <motion.div
@@ -124,7 +141,7 @@ export default function ParentGatePage() {
           <h1 className="font-fredoka text-3xl text-[#3D2C1E] tracking-wide mb-2 text-center">
             {t("title")}
           </h1>
-          <p className="text-[#7A6552] text-center font-bold text-lg max-w-260px leading-snug">
+          <p className="text-[#7A6552] text-center font-bold text-lg max-w-[260px] leading-snug">
             {t("instruction")}
           </p>
         </motion.div>
@@ -134,7 +151,7 @@ export default function ParentGatePage() {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="w-full bg-white rounded-32px p-8 mb-8 shadow-[0_12px_32px_rgba(0,0,0,0.04)] border-2 border-[#E8DCC8] flex flex-col items-center"
+          className="w-full bg-white rounded-[32px] p-8 mb-8 shadow-[0_12px_32px_rgba(0,0,0,0.04)] border-2 border-[#E8DCC8] flex flex-col items-center"
         >
           <div className="font-fredoka text-4xl text-[#3D2C1E] mb-6 tracking-widest">
             {factorA} × {factorB} = ?

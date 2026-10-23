@@ -1,0 +1,11 @@
+packages:
+  - .
+
+# These packages ship optional build scripts; their prebuilt binaries are
+# already used, so running the scripts is unnecessary in this project.
+allowBuilds:
+  "@parcel/watcher": false
+  "@swc/core": false
+  msw: false
+  sharp: false
+  unrs-resolver: false

@@ -5,6 +5,8 @@ import { playSound } from "@/lib/sounds";
 
 interface Props {
   hex: string;
+  /** Translated color name for assistive tech */
+  label: string;
   onMatch: () => void;
   onWrong: () => void;
   isCorrect: boolean;
@@ -14,6 +16,7 @@ interface Props {
 
 export function ColorToken({ 
   hex, 
+  label,
   onMatch, 
   onWrong, 
   isCorrect, 
@@ -44,7 +47,7 @@ export function ColorToken({
           // Deep tactile shadow
           boxShadow: disabled ? "none" : `0 8px 0 rgba(0,0,0,0.15), 0 15px 20px rgba(0,0,0,0.1)`,
         }}
-        aria-label="Color Option"
+        aria-label={label}
       >
         {/* Subtle inner highlight to make it look like a shiny paint drop or jelly */}
         <div className="absolute top-[10%] left-[15%] w-[30%] h-[30%] bg-white/30 rounded-full blur-[2px]" />

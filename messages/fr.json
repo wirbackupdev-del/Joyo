@@ -12,17 +12,23 @@
     "finish": "Terminer",
     "back": "Retour",
     "gotIt": "Compris ! 👍",
-    "home": "Accueil"
+    "home": "Accueil",
+    "superDuper": "Super génial !",
+    "superstar": "Superstar"
   },
   "Home": {
     "greeting": "Salut {name} ! 👋",
     "subtitle": "Prêt pour l'aventure ?",
     "tapMe": "Appuie sur moi ! ✨",
-    "trophyRoom": "Ma salle des trophées"
+    "trophyRoom": "Ma salle des trophées",
+    "parentZone": "Espace parents",
+    "starsCount": "Tes étoiles",
+    "continueTitle": "Continue l'aventure !",
+    "continueLevel": "Partie {n}"
   },
   "Shapes": {
     "pageTitle": "Formes",
-    "instruction": "Appuie sur la forme correspondante !",
+    "instruction": "Fais glisser le {shape} dans le cadre !",
     "hintTitle": "Besoin d'aide ?",
     "successTitle": "Super génial !",
     "successBody": "Tu as trouvé le {shape} !",
@@ -37,11 +43,12 @@
     "hintSquare": "Un carré a 4 côtés égaux — comme une fenêtre ou un cadeau !",
     "hintTriangle": "Un triangle a 3 coins pointus — comme une montagne ou une pizza !",
     "hintStar": "Une étoile a 5 branches — on les voit briller la nuit !",
-    "hintHeart": "Un cœur a un creux en haut et une pointe en bas !"
+    "hintHeart": "Un cœur a un creux en haut et une pointe en bas !",
+    "hearAgain": "Écouter encore"
   },
   "Letters": {
     "pageTitle": "Lettres",
-    "instruction": "Appuie sur la lettre que tu vois ! 👆",
+    "instruction": "Fais glisser la lettre {letter} dans le cadre !",
     "hintTitle": "Besoin d'aide ?",
     "successBody": "Tu as trouvé la lettre {letter} !",
     "nextLetter": "Lettre suivante →",
@@ -51,31 +58,33 @@
     "hintC": "C comme Canard 🦆 — Le C fait le son 'keuh' !",
     "hintD": "D comme Dauphin 🐬 — Le D fait le son 'deuh' !",
     "hintE": "E comme Éléphant 🐘 — Le E fait le son 'euh' !",
-    "hintF": "F comme Fleur 🌸 — Le F fait le son 'fff' !",
-    "hintG": "G comme Gâteau 🍰 — Le G fait le son 'gueuh' !",
-    "hintH": "H comme Hibou 🦉 — Le H est muet ou fait un petit souffle !",
-    "hintI": "I comme Île 🏝️ — Le I fait le son 'iii' !",
-    "hintJ": "J comme Jardin 🏡 — Le J fait le son 'jjeuh' !",
-    "hintK": "K comme Kangourou 🦘 — Le K fait le son 'keuh' !",
-    "hintL": "L comme Lapin 🐰 — Le L fait le son 'lll' !",
-    "hintM": "M comme Maison 🏠 — Le M fait le son 'mmm' !",
-    "hintN": "N comme Nuage ☁️ — Le N fait le son 'nnn' !",
-    "hintO": "O comme Orange 🍊 — Le O fait le son 'ooo' !",
-    "hintP": "P comme Poisson 🐟 — Le P fait le son 'peuh' !",
-    "hintQ": "Q comme Quille 🎳 — Le Q fait le son 'keuh' !",
-    "hintR": "R comme Robot 🤖 — Le R fait le son 'rrr' !",
-    "hintS": "S comme Soleil ☀️ — Le S fait le son 'sss' !",
-    "hintT": "T comme Tortue 🐢 — Le T fait le son 'teuh' !",
-    "hintU": "U comme Usine 🏭 — Le U fait le son 'uuu' !",
-    "hintV": "V comme Vélo 🚲 — Le V fait le son 'vvv' !",
-    "hintW": "W comme Wagon 🚃 — Le W fait le son 'v' ou 'wuh' !",
-    "hintX": "X comme Xylophone 🪘 — Le X fait le son 'ks' !",
-    "hintY": "Y comme Yaourt 🍦 — Le Y fait le son 'iii' !",
-    "hintZ": "Z comme Zèbre 🦓 — Le Z fait le son 'zzz' !"
+    "hintF": "F comme Poisson 🐟 — F fait le son « fff » !",
+    "hintG": "G comme Raisin 🍇 — G fait le son « guh » !",
+    "hintH": "H comme Chapeau 🎩 — H souffle comme un petit vent !",
+    "hintI": "I comme Igloo 🧊 — I fait le son « i » !",
+    "hintJ": "J comme Pot 🫙 — J fait le son « j » !",
+    "hintK": "K comme Cerf-volant 🪁 — K fait le son « ka » !",
+    "hintL": "L comme Lion 🦁 — L fait le son « lll » !",
+    "hintM": "M comme Lune 🌙 — M fait le son « mmm » !",
+    "hintN": "N comme Nid 🪺 — N fait le son « nnn » !",
+    "hintO": "O comme Orange 🍊 — O fait le son « o » !",
+    "hintP": "P comme Cochon 🐷 — P fait le son « p » !",
+    "hintQ": "Q comme Reine 👑 — Q fait le son « ku » !",
+    "hintR": "R comme Pluie 🌧️ — R roule comme « rrr » !",
+    "hintS": "S comme Soleil ☀️ — S fait le son « sss » !",
+    "hintT": "T comme Arbre 🌳 — T fait le son « t » !",
+    "hintU": "U comme Parapluie ☂️ — U fait le son « u » !",
+    "hintV": "V comme Violon 🎻 — V fait le son « vvv » !",
+    "hintW": "W comme Baleine 🐋 — W fait le son « wouh » !",
+    "hintX": "X comme Radio 🩻 — X fait le son « ks » !",
+    "hintY": "Y comme Laine 🧶 — Y fait le son « y » !",
+    "hintZ": "Z comme Zèbre 🦓 — Z fait le son « zzz » !",
+    "hearAgain": "Écouter encore"
   },
   "Splash": {
     "ariaLabel": "Logo JOYO",
-    "loading": "Chargement..."
+    "loading": "Chargement...",
+    "tapToContinue": "Touche pour continuer"
   },
   "Onboarding": {
     "step1Title": "Salut ! 👋",
@@ -88,11 +97,11 @@
     "startAdventure": "Commence l'aventure !"
   },
   "Modules": {
-      "title": "Choisis un jeu !",
-      "shapes": "Les formes",
-      "letters": "Les lettres",
-      "numbers": "Les chiffres",
-      "colors": "Les couleurs"
+    "title": "Choisis un jeu !",
+    "shapes": "Les formes",
+    "letters": "Les lettres",
+    "numbers": "Les chiffres",
+    "colors": "Les couleurs"
   },
   "Numbers": {
     "pageTitle": "Les chiffres",
@@ -105,7 +114,8 @@
     "hint2": "Le 2 fait une boucle et revient sur sa ligne !",
     "hint3": "Le 3 a deux grandes courbes comme un papillon !",
     "hint4": "Le 4 descend, tourne, et redescend encore !",
-    "hint5": "Le 5 a un cou droit, un ventre tout rond et un chapeau !"
+    "hint5": "Le 5 a un cou droit, un ventre tout rond et un chapeau !",
+    "hearAgain": "Écouter encore"
   },
   "Colors": {
     "pageTitle": "Les couleurs",
@@ -123,7 +133,9 @@
     "hintBlue": "Le bleu est comme le ciel ou l'océan ! 🌊",
     "hintYellow": "Le jaune est comme le soleil brillant ou une banane ! ☀️",
     "hintGreen": "Le vert est comme l'herbe ou les feuilles des arbres ! 🌿",
-    "hintPurple": "Le violet est comme les raisins sucrés ou une fleur magique ! 🍇"
+    "hintPurple": "Le violet est comme les raisins sucrés ou une fleur magique ! 🍇",
+    "hearAgain": "Écouter encore",
+    "instructionOption": "La couleur {color}"
   },
   "Progress": {
     "title": "Salle des trophées",
@@ -133,7 +145,8 @@
     "emptyBody": "Joue à ton premier jeu pour gagner ta première étoile.",
     "startPlaying": "Commencer à jouer !",
     "locked": "Verrouillé",
-    "unlocked": "Déverrouillé !"
+    "unlocked": "Déverrouillé !",
+    "badgesCount": "{earned} sur {total} débloqués"
   },
   "ParentGate": {
     "title": "Espace Parents",
@@ -152,7 +165,16 @@
     "favoriteModule": "Favori",
     "noneYet": "Aucun pour l'instant",
     "settings": "Paramètres",
-    "viewDetails": "Voir les détails"
+    "viewDetails": "Voir les détails",
+    "defaultChild": "Ton enfant",
+    "detailedCta": "Progression détaillée",
+    "detailedCtaSub": "Voir toute la salle des trophées",
+    "back": "Retour à l'accueil",
+    "sessions": "Sessions de jeu",
+    "weekTitle": "Cette semaine",
+    "weekStars": "{n} étoiles cette semaine",
+    "moduleBreakdown": "Progression par module",
+    "insight": "Prochaine étape : {module} — une idée parfaite à essayer ensemble ce soir."
   },
   "Settings": {
     "title": "Paramètres",
@@ -164,16 +186,63 @@
     "save": "Enregistrer",
     "language": "Langue",
     "dangerZone": "Zone de danger",
-    "resetProgress": "Réinitialiser toute la progression",
-    "resetWarning": "Cela supprimera toutes les étoiles et les modules. Cette action est irréversible.",
+    "resetProgress": "Supprimer toutes les données",
+    "resetWarning": "Cela supprimera toutes les étoiles, badges et le profil de cet appareil. Action irréversible.",
     "cancel": "Annuler",
-    "confirmReset": "Oui, réinitialiser la progression",
-    "version": "Joyo v1.0.0 • Conforme à la loi COPPA"
+    "confirmReset": "Oui, tout supprimer",
+    "version": "Joyo v1.2.0 • Conforme COPPA",
+    "volume": "Volume général",
+    "haptics": "Vibration",
+    "defaultChild": "Ton enfant",
+    "back": "Retour",
+    "narration": "Volume de la voix",
+    "narrationHint": "Les instructions parlées pour votre enfant",
+    "narrationOff": "La voix est coupée",
+    "sessionCap": "Temps de jeu quotidien",
+    "sessionCapHint": "Quand la limite est atteinte, Joyo s'endort doucement jusqu'à demain.",
+    "capOff": "Off",
+    "capMinutes": "{n} min",
+    "lockGate": "Reverrouiller la zone parents",
+    "installTitle": "Installer Joyo",
+    "installSubtitle": "Mieux vécu comme application sur l'écran d'accueil :",
+    "iosStep1": "Ouvrez cette page dans Safari",
+    "iosStep2": "Touchez le bouton Partager dans la barre d'outils",
+    "iosStep3": "Choisissez « Sur l'écran d'accueil »",
+    "installIosNote": "Les navigateurs Android proposent automatiquement « Installer l'application ».",
+    "privacyTitle": "Données et confidentialité",
+    "privacyItem1": "La progression reste sur cet appareil — aucun compte requis pour l'enfant.",
+    "privacyItem2": "Seul un parent peut se connecter pour synchroniser la progression.",
+    "privacyItem3": "Nous ne collectons jamais de données sur les enfants.",
+    "privacyNote": "Conforme à la COPPA. Vous pouvez tout effacer ci-dessous à tout moment."
   },
   "Celebration": {
     "moduleComplete": "Module terminé ! 🎉",
     "youAreAStar": "Tu es une étoile brillante !",
     "claimReward": "Récupérer mon étoile ⭐",
-    "keepPlaying": "Continuer à jouer"
+    "keepPlaying": "Continuer à jouer",
+    "diplomaTitle": "Bravo ! C'est fini ! 🎓"
+  },
+  "Hint": {
+    "needHelp": "Besoin d'aide ?"
+  },
+  "Badge": {
+    "firstStar": "Première étoile !",
+    "letters": "Maître des Lettres",
+    "shapes": "Maître des Formes",
+    "numbers": "Maître des Nombres",
+    "colors": "Maître des Couleurs",
+    "stars25": "25 étoiles !",
+    "stars100": "100 étoiles !",
+    "threeDays": "3 jours de suite"
+  },
+  "CalmDown": {
+    "title": "Joyo dort 💤",
+    "body": "Les animaux vont se coucher après tant de jeux. À demain pour de nouvelles aventures !",
+    "unlock": "Parents : ajuster le temps"
+  },
+  "Error": {
+    "title": "Oups ! 🙈",
+    "body": "Un petit pépin ! Le petit koala va t'aider à revenir !",
+    "retry": "Réessayer"
   }
 }

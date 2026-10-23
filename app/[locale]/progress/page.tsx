@@ -1,32 +1,32 @@
 // app/[locale]/progress/page.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, useMotionValue, useTransform, animate, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Star, Lock, Play, Trophy } from "lucide-react";
+import { Star, Lock, Play, Trophy } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
 
 import { useJoyoStore } from "@/store/useJoyoStore";
+import { useHydrated } from "@/lib/hooks/useHydrated";
+import { BADGES } from "@/lib/lessons/badges";
 import { BotanicalBackground } from "@/components/game/BotanicalBackground";
 import { Confetti } from "@/components/game/Confetti";
+import { SessionWatcher } from "@/components/game/SessionWatcher";
 import { AnimalCharacter } from "@/components/game/AnimalCharacter";
-import { playSound } from "@/lib/sounds";
+import { playSound, startMusic, stopMusic } from "@/lib/sounds";
 
 export default function ProgressPage() {
   const t = useTranslations("Progress");
   const tc = useTranslations("Common");
-  const tm = useTranslations("Modules");
+  const tBadge = useTranslations("Badge");
   const router = useRouter();
 
-  // Zustand state
-  const { stars, completedModules, avatar } = useJoyoStore();
-
-  // ── mounted: ref-guarded one-shot setState to suppress the ESLint rule.
-  // The `hasMounted` ref prevents setState from being called on re-renders,
-  // which is exactly what the rule guards against (cascading renders).
-  const hasMounted = useRef(false);
-  const [mounted, setMounted] = useState(false);
+  const hydrated = useHydrated();
+  const { stars, avatar } = useJoyoStore();
+  const earned = useJoyoStore((s) =>
+    BADGES.filter((b) => b.check(s)).map((b) => b.id)
+  );
 
   const [showConfetti, setShowConfetti] = useState(false);
 
@@ -35,29 +35,32 @@ export default function ProgressPage() {
   const rounded = useTransform(count, Math.round);
 
   useEffect(() => {
-    if (!hasMounted.current) {
-      hasMounted.current = true;
-      setMounted(true);
-    }
+    startMusic();
+    return () => stopMusic();
+  }, []);
 
-    // Play a delightful sound on load based on their star count
+  useEffect(() => {
     if (stars > 0) {
       playSound("pop");
       const animation = animate(count, stars, {
         duration: 1.5,
-        type: "spring",
+        type: "spring" as const,
         bounce: 0.25,
       });
 
-      // If they have all 4 core modules done, trigger confetti
-      if (completedModules.length >= 4) {
-        setTimeout(() => setShowConfetti(true), 500);
-        setTimeout(() => playSound("cheer"), 500);
+      // All 8 badges earned → celebrate!
+      if (earned.length === BADGES.length) {
+        const confettiTimer = setTimeout(() => setShowConfetti(true), 500);
+        const cheerTimer = setTimeout(() => playSound("cheer"), 500);
+        return () => {
+          clearTimeout(confettiTimer);
+          clearTimeout(cheerTimer);
+          animation.stop();
+        };
       }
-
-      return animation.stop;
     }
-  }, [stars, count, completedModules]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const goBack = () => {
     playSound("pop");
@@ -69,26 +72,18 @@ export default function ProgressPage() {
     router.push("/modules");
   };
 
-  // Define the core modules to render the badge grid
-  const BADGES = [
-    { id: "shapes", label: tm("shapes"), color: "#4CAF50", shadow: "rgba(56,142,60,1)" },
-    { id: "letters", label: tm("letters"), color: "#F5C518", shadow: "rgba(212,168,0,1)" },
-    { id: "numbers", label: tm("numbers"), color: "#5C9BF5", shadow: "rgba(33,105,243,1)" },
-    { id: "colors", label: tm("colors"), color: "#A86FBE", shadow: "rgba(123,31,162,1)" },
-  ];
-
-  // Prevent hydration errors
-  if (!mounted) return <div className="min-h-screen bg-[#FFF8E7]" />;
+  // Avoid hydration mismatches: the store may be empty at SSR
+  if (!hydrated) return <div className="min-h-screen bg-[#FFF8E7]" />;
 
   const isEmpty = stars === 0;
 
   return (
-    <div className="relative min-h-screen bg-[#FFF8E7] overflow-hidden flex flex-col font-nunito touch-none select-none">
+    <div className="relative min-h-screen bg-[#FFF8E7] overflow-hidden flex flex-col touch-none select-none">
       <BotanicalBackground />
+      <SessionWatcher />
       <Confetti active={showConfetti} />
 
-      <main className="relative z-10 flex flex-col items-center min-h-screen w-full max-w-107.5 mx-auto px-6 pt-6 pb-10">
-
+      <main className="relative z-10 flex flex-col items-center min-h-screen w-full max-w-[430px] mx-auto px-6 pt-6 pb-10">
         {/* ── HEADER ──────────────────────────────────────── */}
         <header className="w-full flex items-center justify-between mb-6 z-20">
           <motion.button
@@ -98,7 +93,18 @@ export default function ProgressPage() {
             className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-[#3D2C1E] active:scale-90 transition-transform shadow-sm border-2 border-[#E8DCC8]"
             aria-label={tc("back")}
           >
-            <ArrowLeft size={28} strokeWidth={3} />
+            <svg
+              viewBox="0 0 24 24"
+              className="w-7 h-7"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
           </motion.button>
 
           <motion.div
@@ -133,7 +139,7 @@ export default function ProgressPage() {
               <h2 className="font-fredoka text-3xl text-[#FF7043] mb-3 text-center drop-shadow-sm">
                 {t("emptyTitle")}
               </h2>
-              <p className="text-[#7A6552] text-xl font-bold text-center max-w-280px mb-10 leading-relaxed">
+              <p className="text-[#7A6552] text-xl font-bold text-center max-w-[280px] mb-10 leading-relaxed">
                 {t("emptyBody")}
               </p>
 
@@ -141,7 +147,7 @@ export default function ProgressPage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={goPlay}
-                className="w-full max-w-300px bg-[#4CAF50] rounded-32px p-6 flex items-center justify-center gap-3 shadow-[0_8px_0_rgba(56,142,60,1)] active:translate-y-2 active:shadow-[0_0px_0_rgba(56,142,60,1)] transition-all"
+                className="w-full max-w-[300px] bg-[#4CAF50] rounded-[32px] p-6 flex items-center justify-center gap-3 shadow-[0_8px_0_rgba(56,142,60,1)] active:translate-y-2 active:shadow-[0_0px_0_rgba(56,142,60,1)] transition-all"
               >
                 <Play className="text-white fill-white" size={32} />
                 <span className="font-fredoka text-3xl text-white mt-1">
@@ -178,26 +184,27 @@ export default function ProgressPage() {
                 </div>
               </motion.div>
 
-              {/* BADGES GRID SECTION */}
+              {/* BADGES GRID SECTION — the cabinet */}
               <div className="w-full bg-white rounded-[40px] p-8 shadow-[0_15px_40px_rgba(0,0,0,0.06)] border-4 border-white border-b-[#E8DCC8]">
-                <h3 className="font-fredoka text-2xl text-[#3D2C1E] mb-6 text-center">
+                <h3 className="font-fredoka text-2xl text-[#3D2C1E] mb-2 text-center">
                   {t("badgesEarned")}
                 </h3>
+                <p className="text-[#B8A898] font-bold text-sm text-center mb-6">
+                  {t("badgesCount", { earned: earned.length, total: BADGES.length })}
+                </p>
 
                 <div className="grid grid-cols-2 gap-5 w-full">
                   {BADGES.map((badge, idx) => {
-                    const isUnlocked = completedModules.includes(badge.id);
+                    const isUnlocked = earned.includes(badge.id);
 
                     return (
                       <motion.div
                         key={badge.id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 + idx * 0.1, type: "spring", bounce: 0.4 }}
-                        className={`relative aspect-square rounded-24px flex flex-col items-center justify-center gap-3 transition-all duration-500 ${
-                          isUnlocked
-                            ? "bg-white"
-                            : "bg-[#F7F4EE] opacity-70 grayscale-[0.8]"
+                        transition={{ delay: 0.3 + idx * 0.06, type: "spring", bounce: 0.4 }}
+                        className={`relative aspect-square rounded-[24px] flex flex-col items-center justify-center gap-3 transition-all duration-500 ${
+                          isUnlocked ? "" : "grayscale"
                         }`}
                         style={{
                           backgroundColor: isUnlocked ? badge.color : "#F7F4EE",
@@ -206,12 +213,13 @@ export default function ProgressPage() {
                             : "inset 0 4px 10px rgba(0,0,0,0.05)",
                           border: isUnlocked ? "none" : "2px dashed #E8DCC8",
                         }}
+                        aria-label={tBadge(badge.nameKey as "firstStar")}
                       >
                         {isUnlocked ? (
                           <>
                             <Trophy className="text-white drop-shadow-md w-10 h-10" />
-                            <span className="font-fredoka text-white text-xl drop-shadow-sm">
-                              {badge.label}
+                            <span className="font-fredoka text-white text-lg drop-shadow-sm text-center px-2">
+                              {(tBadge as (key: string) => string)(badge.nameKey)}
                             </span>
                           </>
                         ) : (

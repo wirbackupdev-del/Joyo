@@ -1,148 +1,97 @@
+// app/[locale]/play/shapes/page.tsx
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Lightbulb } from "lucide-react";
+import { ArrowLeft, Lightbulb, Volume2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
 
-import { useJoyoStore } from "@/store/useJoyoStore";
 import { SHAPES_DATA, type Shape } from "@/lib/lessons/shapes";
-import { AnswerToken } from "@/components/game/AnswerToken";
+import { useLessonGame } from "@/lib/hooks/useLessonGame";
+import { useHydrated } from "@/lib/hooks/useHydrated";
+import { DragToken } from "@/components/game/DragToken";
 import { AnimalCharacter } from "@/components/game/AnimalCharacter";
 import { BotanicalBackground } from "@/components/game/BotanicalBackground";
-import { Confetti } from "@/components/game/Confetti";
+import { StarCounter } from "@/components/game/StarCounter";
+import { SessionWatcher } from "@/components/game/SessionWatcher";
 import { HintModal } from "@/components/modals/HintModal";
 import { CelebrationModal } from "@/components/modals/CelebrationModal";
-import { playSound } from "@/lib/sounds";
-import { syncProgressToSupabase, markModuleComplete } from "@/lib/progress";
-
-type ShapeNameKey = "circle" | "square" | "triangle" | "star" | "heart";
-type HintKey = "hintCircle" | "hintSquare" | "hintTriangle" | "hintStar" | "hintHeart";
+import { playSound, startMusic, stopMusic } from "@/lib/sounds";
 
 export default function ShapesPage() {
   const t = useTranslations("Shapes");
   const tc = useTranslations("Common");
 
   const router = useRouter();
-  const { addStar, stars, completeModule } = useJoyoStore();
-
-  // ── GAME STATE ───────────────────────────────────
-  const [level, setLevel] = useState(0);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [showHint, setShowHint] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [speech, setSpeech] = useState("");
-  const [showSpeech, setShowSpeech] = useState(false);
-  const [wrongShake, setWrongShake] = useState(false);
-
-  const speechTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const idleTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dropZoneRef = useRef<HTMLDivElement | null>(null);
+  const hydrated = useHydrated();
 
-  const generateOptions = useCallback((current: Shape) => {
-    const distractors = SHAPES_DATA
-      .filter((s) => s.id !== current.id)
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 3);
-
-    return [...distractors, current].sort(() => Math.random() - 0.5);
-  }, []);
-
-  // ✅ Fix 1: Lazy initializer — no useEffect needed, avoids hydration mismatch
-  const [options, setOptions] = useState<Shape[]>(() =>
-    generateOptions(SHAPES_DATA[0])
-  );
-
-  const currentShape = SHAPES_DATA[level];
-  const totalShapes = SHAPES_DATA.length;
-  const progressPct = (level / totalShapes) * 100;
-
-  const triggerSpeech = useCallback((msg: string) => {
-    if (speechTimeout.current) clearTimeout(speechTimeout.current);
-    setSpeech(msg);
-    setShowSpeech(true);
-    speechTimeout.current = setTimeout(() => setShowSpeech(false), 2800);
-  }, []);
-
-  // ✅ Fix 2: startIdleTimer only touches a ref + setTimeout — no setState in effect body
-  const startIdleTimer = useCallback(() => {
-    if (idleTimeout.current) clearTimeout(idleTimeout.current);
-    idleTimeout.current = setTimeout(() => {}, 5000); // extend if isIdle is needed for shapes
-  }, []);
+  const {
+    level,
+    current,
+    options,
+    isSuccess,
+    showHint,
+    openHint,
+    closeHint,
+    speech,
+    showSpeech,
+    triggerSpeech,
+    sayInstruction,
+    wrongShake,
+    handleMatch,
+    handleWrong,
+    handleNext,
+    progressPct,
+    stars,
+    moduleCompleted,
+  } = useLessonGame<Shape>({
+    lessons: SHAPES_DATA,
+    moduleId: "shapes",
+    getInstruction: (lesson) => t("instruction", { shape: t(lesson.nameKey as "circle") }),
+    getSayText: (lesson) => t("instruction", { shape: t(lesson.nameKey as "circle") }),
+  });
 
   useEffect(() => {
-    if (options.length === 0) return;
+    startMusic();
+    return () => stopMusic();
+  }, []);
 
-    const timer = setTimeout(() => {
-      triggerSpeech(t("instruction"));
-    }, 500);
-
-    startIdleTimer();
-
-    return () => {
-      clearTimeout(timer);
-      if (speechTimeout.current) clearTimeout(speechTimeout.current);
-      if (idleTimeout.current) clearTimeout(idleTimeout.current);
-    };
-  }, [level, options.length, t, triggerSpeech, startIdleTimer]);
-
-  const handleMatch = async () => {
-    if (isSuccess) return;
-    setIsSuccess(true);
-    setShowConfetti(true);
-    playSound("correct");
-
-    addStar();
-    triggerSpeech(tc("greatJob"));
-
-    syncProgressToSupabase(stars + 1, "shapes").catch(console.error);
-
-    if (level === totalShapes - 1) {
-      markModuleComplete("shapes").catch(console.error);
-      completeModule("shapes");
+  const onMatch = () => {
+    if (!isSuccess) {
+      triggerSpeech(tc("greatJob"));
+      handleMatch();
     }
   };
 
-  const handleWrong = () => {
-    playSound("wrong");
+  const onWrong = () => {
+    handleWrong();
     triggerSpeech(tc("tryAgain"));
-    setWrongShake(true);
-    setTimeout(() => setWrongShake(false), 500);
   };
 
-  const handleNext = () => {
-    setIsSuccess(false);
-    setShowConfetti(false);
-    if (level < totalShapes - 1) {
-      const nextLevel = level + 1;
-      setLevel(nextLevel);
-      setOptions(generateOptions(SHAPES_DATA[nextLevel]));
-    } else {
-      router.push("/home");
-    }
-  };
-
-  if (options.length === 0) {
-    return <div className="min-h-screen bg-[#4CAF50]" />;
-  }
+  // Avoid hydration mismatches: persisted level/badge state only exists client-side
+  if (!hydrated) return <div className="min-h-screen bg-[#4CAF50]" />;
 
   return (
     <div className="relative min-h-screen bg-[#4CAF50] overflow-hidden flex flex-col font-nunito touch-none select-none">
       <BotanicalBackground />
-      <Confetti active={showConfetti} />
+      <SessionWatcher />
 
-      <div className="relative z-10 flex flex-col items-center h-screen w-full max-w-107.5 mx-auto px-6 pb-8">
-
+      <div className="relative z-10 flex flex-col items-center h-full-screen w-full max-w-[430px] mx-auto px-6 pb-8">
         <header className="w-full flex items-center justify-between pt-6 pb-2">
           <button
-            onClick={() => router.back()}
+            onClick={() => {
+              playSound("pop");
+              router.push("/modules");
+            }}
             className="w-12 h-12 rounded-full bg-white/30 flex items-center justify-center text-white active:scale-90 transition-transform"
+            aria-label={tc("back")}
           >
             <ArrowLeft size={24} strokeWidth={3} />
           </button>
 
-          <div className="flex-1 mx-4 h-3.5 bg-white/30 rounded-full overflow-hidden">
+          <div className="flex-1 mx-3 h-3.5 bg-white/30 rounded-full overflow-hidden">
             <motion.div
               className="h-full bg-[#F5C518] shadow-[0_0_12px_rgba(245,197,24,0.6)]"
               initial={{ width: 0 }}
@@ -151,22 +100,18 @@ export default function ShapesPage() {
             />
           </div>
 
+          <div className="mx-1 rounded-full bg-white/30 px-3 py-1.5">
+            <StarCounter count={stars} size={18} />
+          </div>
+
           <button
-            onClick={() => setShowHint(true)}
-            className="w-12 h-12 rounded-full bg-white/30 flex items-center justify-center text-white active:scale-90 transition-transform"
+            onClick={openHint}
+            className="w-12 h-12 rounded-full bg-white/30 flex items-center justify-center text-white active:scale-90 transition-transform ml-1"
+            aria-label={t("hintTitle")}
           >
             <Lightbulb size={24} strokeWidth={2.5} />
           </button>
         </header>
-
-        <motion.h1
-          key={currentShape.id}
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="font-fredoka text-4xl text-white text-center mt-2 drop-shadow-md"
-        >
-          {t(currentShape.nameKey as ShapeNameKey)}
-        </motion.h1>
 
         <div className="flex gap-2 mt-2 mb-4">
           {SHAPES_DATA.map((_, i) => (
@@ -198,13 +143,26 @@ export default function ShapesPage() {
               <svg
                 viewBox="0 0 100 100"
                 className="w-32 h-32 drop-shadow-xl transition-colors duration-500"
-                fill={isSuccess ? currentShape.color : "rgba(255,255,255,0.3)"}
+                fill={isSuccess ? current.color : "rgba(255,255,255,0.3)"}
+                aria-hidden="true"
               >
-                <path d={currentShape.svgPath} />
+                <path d={current.svgPath} />
               </svg>
             </motion.div>
-            <div className="absolute -bottom-8 left-0 right-0 text-center text-white/80 font-bold text-sm tracking-wide">
-              {isSuccess ? tc("youDidIt") : t("instruction")}
+            {/* Instruction + replay button — hear it as often as needed */}
+            <div className="absolute -bottom-8 left-0 right-0 text-center text-white/80 font-bold text-sm tracking-wide flex items-center justify-center gap-2">
+              {!isSuccess && (
+                <button
+                  onClick={sayInstruction}
+                  className="w-8 h-8 rounded-full bg-white/30 flex items-center justify-center text-white active:scale-90 transition-transform shrink-0"
+                  aria-label={t("hearAgain")}
+                >
+                  <Volume2 size={16} strokeWidth={3} />
+                </button>
+              )}
+              <span>
+                {isSuccess ? tc("youDidIt") : t("instruction", { shape: t(current.nameKey as "circle") })}
+              </span>
             </div>
           </div>
 
@@ -222,47 +180,51 @@ export default function ShapesPage() {
                 </motion.div>
               )}
             </AnimatePresence>
-            <AnimalCharacter
-              animal={currentShape.animal}
-              color={currentShape.color}
-              className="w-24 h-24"
-            />
+            <AnimalCharacter animal={current.animal} color={current.color} className="w-24 h-24" />
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 w-full max-w-90 mb-4">
-          {options.map((shape, idx) => (
-            <AnswerToken
-              key={`${level}-${shape.id}-${idx}`}
-              svgPath={shape.svgPath}
-              color={shape.color}
-              isCorrectShape={shape.id === currentShape.id}
-              onMatch={handleMatch}
-              onWrong={handleWrong}
+        <div className="grid grid-cols-2 gap-4 w-full max-w-[360px] mb-4">
+          {options.map((shape) => (
+            <DragToken
+              key={`${level}-${shape.id}`}
+              shape="circle"
+              isCorrect={shape.id === current.id}
+              onMatch={onMatch}
+              onWrong={onWrong}
               disabled={isSuccess}
               dropZoneRef={dropZoneRef}
-            />
+            >
+              <svg
+                viewBox="0 0 100 100"
+                className="w-[52%] h-[52%]"
+                style={{ color: shape.color }}
+                aria-hidden="true"
+              >
+                <path d={shape.svgPath} fill="currentColor" />
+              </svg>
+            </DragToken>
           ))}
         </div>
       </div>
 
-      {/* ✅ Replaced inline celebration modal with shared CelebrationModal component */}
+      {/* Shared celebration modal — brings its own confetti */}
       <CelebrationModal
         isOpen={isSuccess}
         onNext={handleNext}
         title={t("successTitle")}
-        subtitle={tc("greatJob")}
-        buttonText={level < totalShapes - 1 ? t("nextShape") : tc("finish")}
+        subtitle={t("successBody", { shape: t(current.nameKey as "circle") })}
+        buttonText={level < SHAPES_DATA.length - 1 ? t("nextShape") : tc("finish")}
+        diploma={moduleCompleted}
       />
 
-      {/* ✅ Replaced inline hint modal with shared HintModal component */}
       <HintModal
         isOpen={showHint}
-        onClose={() => setShowHint(false)}
+        onClose={closeHint}
         title={t("hintTitle")}
-        hintText={t(currentShape.hintKey as HintKey)}
-        animal={currentShape.animal as "koala" | "fox" | "bear" | "dog" | "rabbit"}
-        animalColor={currentShape.color}
+        hintText={t(current.hintKey as "hintCircle")}
+        animal={current.animal}
+        animalColor={current.color}
       />
     </div>
   );

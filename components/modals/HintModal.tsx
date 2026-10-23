@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 
 import { AnimalCharacter } from "@/components/game/AnimalCharacter";
 import { playSound } from "@/lib/sounds";
+import { useFocusTrap } from "@/lib/hooks/useFocusTrap";
 
 interface HintModalProps {
   isOpen: boolean;
@@ -18,21 +19,33 @@ interface HintModalProps {
   animalColor?: string;
 }
 
-export function HintModal({ 
-  isOpen, 
-  onClose, 
-  title, 
+export function HintModal({
+  isOpen,
+  onClose,
+  title,
   hintText,
   animal = "koala",
   animalColor = "#5C9BF5"
 }: HintModalProps) {
+  const t = useTranslations("Hint");
   const tc = useTranslations("Common");
+  const trapRef = useFocusTrap<HTMLDivElement>(isOpen);
 
   useEffect(() => {
     if (isOpen) {
       playSound("pop");
     }
   }, [isOpen]);
+
+  // Escape closes the sheet (accessibility)
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
 
   const handleClose = () => {
     playSound("pop");
@@ -42,7 +55,13 @@ export function HintModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-90 flex items-end justify-center overflow-hidden touch-none select-none">
+        <div
+          ref={trapRef}
+          className="fixed inset-0 z-[90] flex items-end justify-center overflow-hidden touch-none select-none"
+          role="dialog"
+          aria-modal="true"
+          aria-label={title || "hint"}
+        >
           
           {/* ── BACKDROP ───────────────────────────────────────── */}
           <motion.div 
@@ -59,7 +78,7 @@ export function HintModal({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="relative w-full max-w-107.5 bg-white rounded-t-[40px] px-6 pt-10 pb-8 shadow-[0_-10px_40px_rgba(0,0,0,0.15)] flex flex-col items-center text-center z-20 border-t-4 border-white"
+            className="relative w-full max-w-[430px] bg-white rounded-t-[40px] px-6 pt-10 pb-8 shadow-[0_-10px_40px_rgba(0,0,0,0.15)] flex flex-col items-center text-center z-20 border-t-4 border-white"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
@@ -89,10 +108,10 @@ export function HintModal({
 
             {/* Typography */}
             <h2 className="font-fredoka text-2xl text-[#3D2C1E] mt-4 mb-3">
-              {title || "Need a hand?"}
+              {title || t("needHelp")}
             </h2>
             
-            <p className="text-[#7A6552] text-lg font-bold mb-8 leading-relaxed max-w-280px">
+            <p className="text-[#7A6552] text-lg font-bold mb-8 leading-relaxed max-w-[280px]">
               {hintText}
             </p>
 
@@ -107,7 +126,7 @@ export function HintModal({
             </motion.button>
 
             {/* Safe Area spacing for newer iPhones */}
-            <div className="h-safe-bottom w-full" />
+            <div className="w-full" style={{ height: "env(safe-area-inset-bottom)" }} />
           </motion.div>
         </div>
       )}
